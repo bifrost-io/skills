@@ -1,9 +1,10 @@
 ---
 name: bifrost-slpx-stake
 description: |
-  Execute liquid staking operations on Bifrost SLPx protocol. Mint vETH by staking ETH,
-  redeem vETH back to ETH, and claim ETH after redemption completes.
-  Use this skill when users want to stake, unstake, mint, redeem, or claim on Bifrost.
+  Execute liquid staking operations on Bifrost SLPx protocol across Ethereum, Base, Optimism,
+  and Arbitrum. Mint vETH by staking ETH/WETH, redeem vETH back to ETH, and claim after
+  redemption completes. Supports manual signing and agent-side signing via ERC-4626 vault.
+  Use when users want to stake, unstake, mint, redeem, or claim ETH on Bifrost DeFi.
 metadata:
   author: bifrost.io
   version: "1.0.0"

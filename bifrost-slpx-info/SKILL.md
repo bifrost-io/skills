@@ -1,10 +1,10 @@
 ---
 name: bifrost-slpx-info
 description: |
-  Query Bifrost SLPx liquid staking protocol data on-chain. Get vToken exchange rates,
-  user vToken balances, redemption queue status, deposit/redeem limits, and protocol stats.
-  Use this skill when users ask about Bifrost staking rates, vETH prices,
-  their vToken holdings, or redemption status.
+  Query Bifrost SLPx liquid staking protocol data on Ethereum, Base, Optimism, and Arbitrum.
+  Get vETH/ETH exchange rates, APY, TVL, user balances, redemption queue status, and protocol stats
+  via on-chain ERC-4626 vault calls and Bifrost REST API.
+  Use when users ask about Bifrost staking rates, vETH prices, DeFi yield, or vToken holdings.
 metadata:
   author: bifrost.io
   version: "1.0.0"
