@@ -1,10 +1,20 @@
 ---
 name: bifrost-slpx-stake
 description: |
-  Execute liquid staking operations on Bifrost SLPx protocol across Ethereum, Base, Optimism,
-  and Arbitrum. Mint vETH by staking ETH/WETH, redeem vETH back to ETH, and claim after
-  redemption completes. Supports manual signing and agent-side signing via ERC-4626 vault.
+  Execute liquid staking operations on Bifrost SLPx protocol — mint vETH by staking ETH/WETH,
+  redeem vETH back to ETH, and claim after redemption completes. Supports Ethereum, Base,
+  Optimism, and Arbitrum. Manual signing and agent-side signing via ERC-4626 vault.
   Use when users want to stake, unstake, mint, redeem, or claim ETH on Bifrost DeFi.
+keywords:
+  - bifrost
+  - vETH
+  - liquid-staking
+  - DeFi
+  - ETH
+  - staking
+  - ERC-4626
+  - mint
+  - redeem
 metadata:
   author: bifrost.io
   version: "1.0.0"
@@ -12,18 +22,22 @@ metadata:
 
 # Bifrost SLPx Stake
 
-Execute Bifrost vETH liquid staking operations: mint, redeem, and claim.
+Execute Bifrost vETH liquid staking operations: mint, redeem, and claim. Use the **Bifrost REST API** for pre-execution rate previews; on-chain calls for user-specific checks and transaction execution.
 
 ## Contract & Network
 
-vETH is deployed on Ethereum and three L2 networks. The same contract address is used across all chains.
+VETH contract: `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` (same address on all chains)
 
-| Chain | ChainId | VETH Contract | WETH (underlying) | Default RPC | Fallback RPC |
-|-------|---------|---------------|--------------------|----|------|
-| Ethereum | 1 | `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` | `https://ethereum.publicnode.com` | `https://1rpc.io/eth` |
-| Base | 8453 | `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` | `0x4200000000000000000000000000000000000006` | `https://base.publicnode.com` | `https://1rpc.io/base` |
-| Optimism | 10 | `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` | `0x4200000000000000000000000000000000000006` | `https://optimism.publicnode.com` | `https://1rpc.io/op` |
-| Arbitrum | 42161 | `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | `https://arbitrum-one.publicnode.com` | `https://1rpc.io/arb` |
+Transactions must be sent on the user's target chain. Default: Ethereum.
+
+| Chain | ChainId | WETH (underlying) | Default RPC |
+|-------|---------|--------------------|----|
+| Ethereum | 1 | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` | `https://ethereum.publicnode.com` |
+| Base | 8453 | `0x4200000000000000000000000000000000000006` | `https://base.publicnode.com` |
+| Optimism | 10 | `0x4200000000000000000000000000000000000006` | `https://optimism.publicnode.com` |
+| Arbitrum | 42161 | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | `https://arbitrum-one.publicnode.com` |
+
+Fallback RPC: `https://1rpc.io/eth`, `https://1rpc.io/base`, `https://1rpc.io/op`, `https://1rpc.io/arb`
 
 ## Configuration
 
@@ -128,7 +142,7 @@ cast send <VETH_CONTRACT> \
 
 ### Pre-Execution
 
-1. Query rate: `previewDeposit(amount)` → expected vETH
+1. Query rate: try Bifrost API (`totalIssuance / tvm`) first; fall back to on-chain `previewDeposit(amount)` on Ethereum
 2. Check wallet: `BIFROST_PRIVATE_KEY` env var or Foundry keystore `bifrost-agent`
 3. Display preview and wait for CONFIRM
 
@@ -189,19 +203,21 @@ Encode calldata: `cast calldata "redeem(uint256,address,address)" <SHARES> <ADDR
 
 ## Agent Behavior
 
-1. **Environment check**: on first interaction, ask user if they want to configure `BIFROST_CHAIN`, `BIFROST_RPC_URL`, or `BIFROST_PRIVATE_KEY`. If not, use Ethereum Mainnet defaults with manual signing mode
-2. **RPC selection**: use `BIFROST_RPC_URL` if set; otherwise use per-chain default RPC. Fall back to per-chain fallback RPC on failure
-3. **Multi-chain awareness**: when user specifies a chain (e.g. "on Base", "on Arbitrum"), switch to that chain's RPC, WETH address, and chainId accordingly
-4. **Wallet detection**: check `BIFROST_PRIVATE_KEY` env var or Foundry keystore `bifrost-agent`. If found, ask user whether to use it. If not, output tx data for manual signing
-5. **CONFIRM required**: display transaction preview (amount, rate, expected output, chain) and require user to type **CONFIRM** before any write
-6. **Private key import requires CONFIRM**: show security warning first, require CONFIRM before accepting key
-7. **Key retention is user-controlled**: after tx, ask user whether to keep or delete the key
-8. **Balance pre-check**: verify sufficient ETH/vETH before building tx
-9. **Prefer cast, fall back to curl**: use pre-computed calldata from selector table if cast fails
-10. **No credential display**: never echo private keys; truncate addresses (first 6 + last 4)
-11. **Post-completion tip**: if no wallet configured, suggest "set up wallet" after operation
-12. After successful tx, provide block explorer link: `https://etherscan.io/tx/{hash}` (Ethereum), `https://basescan.org/tx/{hash}` (Base), `https://optimistic.etherscan.io/tx/{hash}` (Optimism), `https://arbiscan.io/tx/{hash}` (Arbitrum)
-13. **Useful links**: direct users to [Bifrost vETH page](https://www.bifrost.io/vtoken/veth) or [Bifrost App](https://app.bifrost.io/vstaking/vETH) when relevant
+1. **API first for rate queries**: use Bifrost REST API (`GET https://api.bifrost.app/api/site` → `vETH.tvm` / `vETH.totalIssuance`) for exchange rate previews. Fall back to on-chain `previewDeposit` / `previewRedeem` on Ethereum if API fails
+2. **On-chain for user data**: `balanceOf`, `canWithdrawalAmount`, `maxRedeem` must be queried on the user's target chain
+3. **Environment check**: on first interaction, ask user if they want to configure `BIFROST_CHAIN`, `BIFROST_RPC_URL`, or `BIFROST_PRIVATE_KEY`. If not, use Ethereum Mainnet defaults with manual signing mode
+4. **Chain selection**: transactions must be sent on the correct chain. Default to Ethereum. When user specifies a chain, switch to that chain's RPC, WETH address, and chainId
+5. **RPC selection**: use `BIFROST_RPC_URL` if set; otherwise use per-chain default RPC. Fall back to fallback RPC on failure
+6. **Wallet detection**: check `BIFROST_PRIVATE_KEY` env var or Foundry keystore `bifrost-agent`. If found, ask user whether to use it. If not, output tx data for manual signing
+7. **CONFIRM required**: display transaction preview (amount, rate, expected output, chain) and require user to type **CONFIRM** before any write
+8. **Private key import requires CONFIRM**: show security warning first, require CONFIRM before accepting key
+9. **Key retention is user-controlled**: after tx, ask user whether to keep or delete the key
+10. **Balance pre-check**: verify sufficient ETH/vETH before building tx
+11. For on-chain calls: prefer `cast`; fall back to `curl` + JSON-RPC if cast unavailable
+12. **No credential display**: never echo private keys; truncate addresses (first 6 + last 4)
+13. **Post-completion tip**: if no wallet configured, suggest "set up wallet" after operation
+14. After successful tx, provide block explorer link: `https://etherscan.io/tx/{hash}` (Ethereum), `https://basescan.org/tx/{hash}` (Base), `https://optimistic.etherscan.io/tx/{hash}` (Optimism), `https://arbiscan.io/tx/{hash}` (Arbitrum)
+15. **Useful links**: direct users to [Bifrost vETH page](https://www.bifrost.io/vtoken/veth) or [Bifrost App](https://app.bifrost.io/vstaking/vETH) when relevant
 
 ## Security
 

@@ -1,10 +1,20 @@
 ---
 name: bifrost-slpx-info
 description: |
-  Query Bifrost SLPx liquid staking protocol data on Ethereum, Base, Optimism, and Arbitrum.
-  Get vETH/ETH exchange rates, APY, TVL, user balances, redemption queue status, and protocol stats
-  via on-chain ERC-4626 vault calls and Bifrost REST API.
+  Query Bifrost SLPx liquid staking protocol data — vETH/ETH exchange rates, APY, TVL,
+  user balances, redemption queue status, and protocol stats.
+  Primary data source: Bifrost REST API. Fallback: on-chain ERC-4626 vault calls on Ethereum.
   Use when users ask about Bifrost staking rates, vETH prices, DeFi yield, or vToken holdings.
+keywords:
+  - bifrost
+  - vETH
+  - liquid-staking
+  - DeFi
+  - ETH
+  - staking
+  - ERC-4626
+  - yield
+  - APY
 metadata:
   author: bifrost.io
   version: "1.0.0"
@@ -12,50 +22,65 @@ metadata:
 
 # Bifrost SLPx Info
 
-Query Bifrost vETH liquid staking data via on-chain calls to the VETH ERC-4626 vault contract.
+Query Bifrost vETH liquid staking data. **Use the Bifrost REST API as the primary data source**; fall back to on-chain calls on Ethereum only when the API is unavailable or when user-specific data is needed.
 
-## Contract & Network
+## Data Source Strategy
 
-vETH is deployed on Ethereum and three L2 networks. The same contract address is used across all chains.
+| Data Type | Primary Source | Fallback |
+|-----------|---------------|----------|
+| APY, TVL, holders, total issuance | **Bifrost API** | — |
+| Exchange rate (ETH ↔ vETH) | **Bifrost API** (derive from `tvm / totalIssuance`) | On-chain `convertToShares` / `convertToAssets` on Ethereum |
+| User balance (`balanceOf`) | On-chain (must query the chain where user holds vETH) | — |
+| User withdrawal status | On-chain (`canWithdrawalAmount`, `getWithdrawals`) | — |
+| Protocol state (`paused`, `asset`, `name`, etc.) | On-chain on Ethereum (synced across chains) | — |
 
-| Chain | ChainId | VETH Contract | WETH (underlying) | Default RPC | Fallback RPC |
-|-------|---------|---------------|--------------------|----|------|
-| Ethereum | 1 | `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` | `https://ethereum.publicnode.com` | `https://1rpc.io/eth` |
-| Base | 8453 | `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` | `0x4200000000000000000000000000000000000006` | `https://base.publicnode.com` | `https://1rpc.io/base` |
-| Optimism | 10 | `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` | `0x4200000000000000000000000000000000000006` | `https://optimism.publicnode.com` | `https://1rpc.io/op` |
-| Arbitrum | 42161 | `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | `https://arbitrum-one.publicnode.com` | `https://1rpc.io/arb` |
+> **Why Ethereum only for on-chain?** Exchange rates, `totalAssets`, and contract metadata are Oracle-synced and identical across all chains. Only `balanceOf`, `totalSupply`, and withdrawal data are chain-specific. Querying Ethereum avoids unnecessary multi-chain complexity.
 
-## Configuration (Environment Variables)
-
-On first run, ask the user whether they want to configure custom settings. If not, use the defaults above.
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `BIFROST_CHAIN` | Target chain name (`ethereum`, `base`, `optimism`, `arbitrum`) | `ethereum` |
-| `BIFROST_RPC_URL` | Custom RPC endpoint | Per-chain default from table above |
-| `BIFROST_VETH_ADDRESS` | VETH contract address (override) | `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` |
-
-## Bifrost Backend API
-
-Protocol-level statistics available via the Bifrost REST API (no RPC needed):
+## Bifrost REST API (Primary)
 
 ```
 GET https://api.bifrost.app/api/site
 ```
 
-Returns JSON with `vETH` object containing:
+Returns JSON. Parse the `vETH` object:
 
-| Field | Description |
-|-------|-------------|
-| `apy` | Total APY (Base + Farming), e.g. `"8.24"` |
-| `apyBase` | Base staking APY from Ethereum validators, e.g. `"3.12"` |
-| `apyReward` | Additional Bifrost farming reward APY, e.g. `"5.12"` |
-| `tvl` | Total value locked in USD |
-| `tvm` | Total vETH minted (in ETH) |
-| `totalIssuance` | Total vETH supply (on Bifrost chain) |
-| `holders` | Number of vETH holders across all chains |
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| `apy` | number | Total APY (base + farming rewards) | `7.97` |
+| `apyBase` | number | Base staking APY from Ethereum validators | `3.04` |
+| `apyReward` | number | Additional Bifrost farming reward APY | `4.93` |
+| `tvl` | number | Total value locked in USD | `1795072.67` |
+| `tvm` | number | Total ETH staked (across all chains) | `764.21` |
+| `totalIssuance` | number | Total vETH supply (across all chains) | `668.21` |
+| `holders` | number | Number of vETH holders across all chains | `178` |
 
-Use this API when users ask about APY, yield, TVL, or holder count.
+**Deriving exchange rate from API:**
+- 1 ETH → vETH: `totalIssuance / tvm` (e.g. 668.21 / 764.21 ≈ 0.8744 vETH)
+- 1 vETH → ETH: `tvm / totalIssuance` (e.g. 764.21 / 668.21 ≈ 1.1436 ETH)
+
+Use this API for: APY queries, TVL queries, holder count, exchange rate overview, protocol summary.
+
+## Contract & Network (Fallback / User Queries)
+
+VETH contract: `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8` (same address on all chains)
+
+| Chain | ChainId | WETH (underlying) | Default RPC |
+|-------|---------|--------------------|----|
+| Ethereum | 1 | `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` | `https://ethereum.publicnode.com` |
+| Base | 8453 | `0x4200000000000000000000000000000000000006` | `https://base.publicnode.com` |
+| Optimism | 10 | `0x4200000000000000000000000000000000000006` | `https://optimism.publicnode.com` |
+| Arbitrum | 42161 | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` | `https://arbitrum-one.publicnode.com` |
+
+Fallback RPC: `https://1rpc.io/eth` (Ethereum), `https://1rpc.io/base`, `https://1rpc.io/op`, `https://1rpc.io/arb`
+
+## Configuration (Environment Variables)
+
+On first run, ask the user whether they want to configure custom settings. If not, use the defaults.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `BIFROST_CHAIN` | Target chain for user-specific queries (`ethereum`, `base`, `optimism`, `arbitrum`) | `ethereum` |
+| `BIFROST_RPC_URL` | Custom RPC endpoint | Per-chain default from table above |
 
 ## Quick Reference
 
@@ -106,9 +131,9 @@ VETH is an ERC-4626 vault inheriting from `VToken → VTokenBase → ERC4626Upgr
 | Max withdraw count | `maxWithdrawCount()` | `0xdc692cd7` | none | uint256 | Maximum number of concurrent pending withdrawal entries per user |
 | Paused | `paused()` | `0x5c975abb` | none | bool | Whether the contract is currently paused (deposits/redeems disabled) |
 
-## How to Call
+## How to Call (On-Chain Fallback)
 
-All queries are read-only `eth_call` — no gas, no signing.
+For user-specific queries or when the API is unavailable. All queries are read-only `eth_call` — no gas, no signing. Default to Ethereum RPC.
 
 **Method A: cast** (preferred)
 ```bash
@@ -146,23 +171,25 @@ curl -s -X POST <RPC_URL> \
 
 ## Agent Behavior
 
-1. **Environment check**: on first interaction, ask user if they want to configure `BIFROST_CHAIN` or `BIFROST_RPC_URL`. If not, use Ethereum Mainnet defaults
-2. **RPC selection**: use `BIFROST_RPC_URL` if set; otherwise use per-chain default RPC. Fall back to per-chain fallback RPC on failure
-3. **Multi-chain awareness**: when user specifies a chain (e.g. "on Base", "on Arbitrum"), switch to that chain's RPC and WETH address accordingly
-4. All values are in wei (18 decimals) — always convert to human-readable before displaying
-5. Default exchange rate query: show rate for 1 ETH if no amount specified
-6. Prompt for wallet address if not provided; display truncated (first 6 + last 4 chars)
-7. If `canWithdrawalAmount` first value > 0, indicate claimable and suggest "claim my redeemed ETH"
-8. Prefer `cast call`; fall back to `curl` + JSON-RPC with pre-computed calldata if cast fails
-9. Always fetch fresh data — do not cache across requests
-10. If RPC fails, retry with fallback before reporting error
-11. **Useful links**: direct users to [Bifrost vETH page](https://www.bifrost.io/vtoken/veth) or [Bifrost App](https://app.bifrost.io/vstaking/vETH) when relevant
+1. **API first**: for protocol-level queries (APY, TVL, exchange rate, holders), always try the Bifrost REST API first. Only fall back to on-chain calls if the API is unreachable
+2. **On-chain for user data**: `balanceOf`, `canWithdrawalAmount`, `getWithdrawals`, `maxRedeem` require on-chain calls. Default to Ethereum unless user specifies a chain
+3. **Environment check**: on first interaction, ask user if they want to configure `BIFROST_CHAIN` or `BIFROST_RPC_URL`. If not, use Ethereum defaults
+4. **Chain selection**: only switch chains when querying user-specific data (balance, withdrawals) on a specific chain. Exchange rates and protocol stats are the same on all chains — just use Ethereum or the API
+5. **RPC selection**: use `BIFROST_RPC_URL` if set; otherwise use per-chain default RPC. Fall back to fallback RPC on failure
+6. All values are in wei (18 decimals) — always convert to human-readable before displaying
+7. Default exchange rate query: show rate for 1 ETH if no amount specified
+8. Prompt for wallet address if not provided; display truncated (first 6 + last 4 chars)
+9. If `canWithdrawalAmount` first value > 0, indicate claimable and suggest "claim my redeemed ETH"
+10. For on-chain calls: prefer `cast call`; fall back to `curl` + JSON-RPC if cast unavailable
+11. Always fetch fresh data — do not cache across requests
+12. **Useful links**: direct users to [Bifrost vETH page](https://www.bifrost.io/vtoken/veth) or [Bifrost App](https://app.bifrost.io/vstaking/vETH) when relevant
 
 ## Error Handling
 
 | Error | User Message |
 |-------|-------------|
-| RPC failure | "Unable to connect to Ethereum. Retrying with backup endpoint..." |
+| API failure (non-200 / timeout) | Fall back to on-chain query on Ethereum. If both fail: "Unable to fetch data. Please try again later." |
+| RPC failure | "Unable to connect. Retrying with backup endpoint..." → try fallback RPC |
 | Zero from `convertToShares` | "The vETH exchange rate is temporarily unavailable. The contract may be paused." |
 | Empty withdrawal array | "You have no pending vETH redemptions." |
 | Invalid address | "Please provide a valid Ethereum address (0x + 40 hex characters)." |
@@ -174,5 +201,7 @@ curl -s -X POST <RPC_URL> \
 2. Exchange rates are Oracle-backed via `oracle.poolInfo(asset)` — may lag slightly vs. actual staking rewards
 3. `getWithdrawals` returns `Withdrawal[]` where each entry has `queued` (amount waiting in queue) and `pending` (amount being processed by Bifrost)
 4. The same VETH contract address is deployed on Ethereum, Base, Optimism, and Arbitrum — but WETH (underlying asset) addresses differ per chain
-5. `totalAssets()` reflects the global pool size from Oracle, while `totalSupply()` is per-chain vETH circulation
-6. `getTotalBalance()` = BridgeVault balance + completed withdrawals — represents ETH available for immediate payouts
+5. **Oracle data is synced across chains**: `convertToShares`, `convertToAssets`, `totalAssets` return identical values on all chains. No need to query L2s for exchange rates
+6. **`totalSupply` is chain-specific**: Ethereum holds ~263 vETH, Base ~1 vETH, Arbitrum ~0.016 vETH. The API `totalIssuance` field gives the cross-chain total (~668 vETH)
+7. `getTotalBalance()` = BridgeVault balance + completed withdrawals — represents ETH available for immediate payouts
+8. **API vs on-chain `totalIssuance`**: the API reports cross-chain total vETH supply (including Bifrost parachain), while on-chain `totalSupply()` is per-chain only
