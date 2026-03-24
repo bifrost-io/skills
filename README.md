@@ -1,63 +1,37 @@
-# Bifrost SLPx Skills
+# Bifrost agent skills
 
-Agent skills for [Bifrost](https://bifrost.io) vETH liquid staking — query on-chain data and execute stake/redeem/claim operations via the SLPx ERC-4626 vault.
+## Installation
+
+Install **one** skill by name:
+
+```bash
+npx skills add bifrost-io/skills --skill bifrost-slpx
+```
+
+Install **all** skills from this repo:
+
+```bash
+npx skills add bifrost-io/skills --skill '*'
+```
+
+Install globally (so the skill is available across projects), add **`-g`** if your `skills` CLI supports it:
+
+```bash
+npx skills add bifrost-io/skills --skill '*' -g
+```
 
 ## Skills
 
-| Skill | Description |
-|-------|-------------|
-| [bifrost-slpx-info](./bifrost-slpx-info/) | Query vETH exchange rates, APY, TVL, balances, redemption status, and protocol stats |
-| [bifrost-slpx-stake](./bifrost-slpx-stake/) | Mint vETH (stake ETH), redeem vETH (unstake), and claim redeemed ETH |
+### Hand-maintained
 
-## Supported Chains
+| Skill                           | Description                                                                                                                                                          |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [bifrost-slpx](./bifrost-slpx/) | Bifrost SLPx liquid staking via [`@bifrostio/slpx-cli`](https://www.npmjs.com/package/@bifrostio/slpx-cli): rates, APY, info, vETH mint/redeem/claim/balance/status. |
 
-Ethereum · Base · Optimism · Arbitrum
+## Related repos
 
-All chains share the same vETH contract: `0xc3997ff81f2831929499c4eE4Ee4e0F08F42D4D8`
+- **CLI only (npm package, no skills bundled):** [slpx-cli](https://github.com/bifrost-io/slpx-cli) — `@bifrostio/slpx-cli`
 
-## Install
+## License
 
-### Option 1: /learn command (Recommended)
-
-If you have the [/learn command](https://agentskill.sh/install) installed, just type in your AI chat:
-
-```
-/learn bifrost
-```
-
-Or install a specific skill directly:
-
-```
-/learn @bifrost-io/skills/bifrost-slpx-info
-/learn @bifrost-io/skills/bifrost-slpx-stake
-```
-
-### Option 2: Git clone (per platform)
-
-Clone this repo into your platform's skills directory:
-
-| Platform | Command |
-|----------|---------|
-| Cursor | `git clone https://github.com/bifrost-io/skills.git ~/.cursor/skills/bifrost-skills` |
-| Claude Code | `git clone https://github.com/bifrost-io/skills.git ~/.claude/skills/bifrost-skills` |
-| Windsurf | `git clone https://github.com/bifrost-io/skills.git ~/.windsurf/skills/bifrost-skills` |
-| Cline | `git clone https://github.com/bifrost-io/skills.git ~/.cline/skills/bifrost-skills` |
-| GitHub Copilot | `git clone https://github.com/bifrost-io/skills.git .github/copilot/skills/bifrost-skills` |
-| OpenClaw | `git clone https://github.com/bifrost-io/skills.git ./skills/bifrost-skills` |
-
-For project-specific install, clone into the project directory instead of `~`.
-
-### Option 3: Manual copy
-
-Download the `SKILL.md` files from this repo and place them in your platform's skills directory.
-
-## Prerequisites
-
-- [Foundry](https://book.getfoundry.sh/getting-started/installation) (`cast` CLI) — for on-chain queries and transaction signing
-- An Ethereum RPC endpoint (public defaults are included, or set `BIFROST_RPC_URL`)
-
-## Links
-
-- [Bifrost](https://bifrost.io)
-- [Bifrost vETH](https://www.bifrost.io/vtoken/veth)
-- [Bifrost dApp](https://app.bifrost.io/vstaking/vETH)
+[MIT](./LICENSE) — same terms as the skill markdown and references in this repository.
