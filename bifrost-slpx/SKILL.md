@@ -18,7 +18,7 @@ keywords:
   - APY
 metadata:
   author: bifrost.io
-  version: "0.1.1"
+  version: "0.1.2"
   pattern: tool-wrapper
   composed_patterns:
     - pipeline
@@ -42,6 +42,7 @@ You operate the Bifrost liquid-staking CLI. On-chain execution is handled inside
 | rate / apy / info only                | `references/commands.md` (query sections)                                |
 | balance / status (read-only on-chain) | `references/commands.md` + `references/tokens-and-chains.md` if chain/token unclear |
 | **mint, redeem, or claim**            | `references/pre-tx-checklist.md`, then `references/commands.md`          |
+| missing `BIFROST_SKILL_PRIVATEKEY` / how to configure the key | `references/private-key-env.md` |
 
 Do **not** skip `pre-tx-checklist.md` before any transaction that could broadcast.
 
@@ -72,9 +73,15 @@ Before mint/redeem/claim, resolve (ask the user if missing):
 
 - **Chain** (`ethereum` | `base` | `optimism` | `arbitrum` for vETH on-chain).
 - **Amount** and whether mint uses **native ETH** or **`--weth`**.
-- **Address**: which address to pass with `--address` when the CLI requires it, or confirm the user has configured automatic signing per package docs (you must not ask for key material).
+- **Address / wallet context** (you must not ask for raw key material):
+  - **`mint` / `redeem` / `claim`:** to **broadcast**, the user needs `BIFROST_SKILL_PRIVATEKEY` per CLI docs. For **`--dry-run`** without that env var, pass **`--address`**. With the env var set, dry-run can run without `--address`.
+  - **`balance` / `status`:** pass an **address argument**, or omit it only if **`BIFROST_SKILL_PRIVATEKEY`** is set (CLI derives the queried address). Batch `balance` still needs explicit comma-separated addresses.
 
 Do **not** start broadcasting or remove `--dry-run` until the above are clear and the pipeline steps are satisfied.
+
+## Missing `BIFROST_SKILL_PRIVATEKEY` or “how do I configure the private key?”
+
+Read `references/private-key-env.md` and follow it end-to-end.
 
 ## Commands, options, and examples
 

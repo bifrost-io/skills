@@ -38,7 +38,7 @@ Examples: `--agent cursor` or `--agent claude-code` (use the name your skills CL
 
 ## Prerequisites
 
-Set the environment variable **`BIFROST_SKILL_PRIVATEKEY`** to your private key for `mint`, `redeem`, and `claim`. **Never** paste private keys into chat.
+Set **`BIFROST_SKILL_PRIVATEKEY`** for: **`mint` / `redeem` / `claim`** (broadcast), and optionally **`balance` / `status`** when you omit the address argument so the CLI uses the wallet-derived address. **Never** paste private keys into chat.
 
 ## Contents
 

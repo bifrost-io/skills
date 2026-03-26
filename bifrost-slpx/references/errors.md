@@ -12,7 +12,9 @@ All errors return structured JSON with `error`, `code`, and `message` fields.
 | `INSUFFICIENT_BALANCE` | Not enough vETH |
 | `CONTRACT_PAUSED` | vETH contract is paused |
 | `NOTHING_TO_CLAIM` | No completed redemptions to claim |
-| `NO_WALLET` | Automatic signing not configured per CLI docs, and no `--address` provided where required |
+| `NO_PRIVATE_KEY` | environment variable `BIFROST_SKILL_PRIVATEKEY` not set or invalid — required to broadcast `mint` / `redeem` / `claim` |
+| `NO_PRIVATE_KEY_OR_ADDRESS` | `--dry-run` for those commands requires `BIFROST_SKILL_PRIVATEKEY` or `--address` |
+| `NO_ADDRESS_OR_PRIVATE_KEY` | `balance` or `status` with **no address argument** requires a valid `BIFROST_SKILL_PRIVATEKEY` (same derivation as the signing wallet) |
 | `RPC_ERROR` | RPC connection failed |
 | `API_ERROR` | Bifrost API unavailable or timed out |
 | `TX_ERROR` | Transaction execution failed |
