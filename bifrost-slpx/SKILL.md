@@ -18,7 +18,7 @@ keywords:
   - APY
 metadata:
   author: bifrost.io
-  version: "0.1.2"
+  version: "0.1.3"
   pattern: tool-wrapper
   composed_patterns:
     - pipeline
@@ -42,7 +42,7 @@ You operate the Bifrost liquid-staking CLI. On-chain execution is handled inside
 | rate / apy / info only                | `references/commands.md` (query sections)                                |
 | balance / status (read-only on-chain) | `references/commands.md` + `references/tokens-and-chains.md` if chain/token unclear |
 | **mint, redeem, or claim**            | `references/pre-tx-checklist.md`, then `references/commands.md`          |
-| missing `BIFROST_SKILL_PRIVATEKEY` / how to configure the key | `references/private-key-env.md` |
+| signing key unset / how to configure it | `references/private-key-env.md` |
 
 Do **not** skip `pre-tx-checklist.md` before any transaction that could broadcast.
 
@@ -60,10 +60,9 @@ For **mint**, **redeem**, and **claim**:
 
 1. Complete the **inversion** prompts below if anything is ambiguous.
 2. Read `references/pre-tx-checklist.md`.
-3. Run with **`--dry-run`** and `--json`; present the structured preview to the user.
-4. Run through the checklist in `pre-tx-checklist.md` and report severity-grouped findings.
-5. **Stop** until the user explicitly approves removing `--dry-run` or broadcasting.
-6. Only then run the signing path the user has configured per CLI docs.
+3. Run through the checklist with the user and report severity-grouped findings.
+4. **Stop** until the user explicitly approves broadcasting.
+5. Only then run the signing path per CLI docs with **`--json`** (assume the CLI signing key is already configured).
 
 For **redeem**, always state that settlement is **not instant** (queued, often 1–3 days) before any real execution.
 
@@ -74,12 +73,12 @@ Before mint/redeem/claim, resolve (ask the user if missing):
 - **Chain** (`ethereum` | `base` | `optimism` | `arbitrum` for vETH on-chain).
 - **Amount** and whether mint uses **native ETH** or **`--weth`**.
 - **Address / wallet context** (you must not ask for raw key material):
-  - **`mint` / `redeem` / `claim`:** to **broadcast**, the user needs `BIFROST_SKILL_PRIVATEKEY` per CLI docs. For **`--dry-run`** without that env var, pass **`--address`**. With the env var set, dry-run can run without `--address`.
-  - **`balance` / `status`:** pass an **address argument**, or omit it only if **`BIFROST_SKILL_PRIVATEKEY`** is set (CLI derives the queried address). Batch `balance` still needs explicit comma-separated addresses.
+  - **`mint` / `redeem` / `claim`:** use the CLI **broadcast** path with the configured signing wallet.
+  - **`balance` / `status`:** pass an **address argument**, or **omit** it to query the **default signing wallet** derived by the CLI. Batch `balance` still needs explicit comma-separated addresses.
 
-Do **not** start broadcasting or remove `--dry-run` until the above are clear and the pipeline steps are satisfied.
+Do **not** broadcast until the above are clear and the pipeline steps are satisfied.
 
-## Missing `BIFROST_SKILL_PRIVATEKEY` or “how do I configure the private key?”
+## Signing key not configured
 
 Read `references/private-key-env.md` and follow it end-to-end.
 

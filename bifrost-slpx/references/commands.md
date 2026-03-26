@@ -59,7 +59,7 @@ vETH extra: `contract`, `chains`, `paused`
 
 ### `balance [address]`
 
-vETH balance and ETH equivalent. **Omit `address`** to query the wallet from `BIFROST_SKILL_PRIVATEKEY`. Comma-separated addresses for batch.
+vETH balance and ETH equivalent. **Omit `address`** to query the CLI **default signing wallet**. Comma-separated addresses for batch.
 
 ```bash
 npx -y @bifrostio/slpx-cli balance --json
@@ -73,7 +73,7 @@ Batch: `results` (`{address, vethBalance, ethValue}`), `chain`
 
 ### `status [address]`
 
-Redemption queue status. Omit address to use `BIFROST_SKILL_PRIVATEKEY` (same as `balance`).
+Redemption queue status. Omit address to query the **default signing wallet** (same as `balance`).
 
 ```bash
 npx -y @bifrostio/slpx-cli status --json
@@ -87,14 +87,14 @@ Output: `address`, `claimableEth` (ETH, amount only), `pendingEthAmount` (ETH, a
 Stake ETH → vETH. `--weth` uses WETH instead of native ETH.
 
 ```bash
-npx -y @bifrostio/slpx-cli mint 0.1 --json --dry-run --address 0x742d...
+npx -y @bifrostio/slpx-cli mint 0.1 --json
 npx -y @bifrostio/slpx-cli mint 0.5 --chain base --json
-npx -y @bifrostio/slpx-cli mint 0.1 --weth --json --dry-run --address 0x742d...
+npx -y @bifrostio/slpx-cli mint 0.1 --weth --json
 npx -y @bifrostio/slpx-cli mint 0.5 --weth --chain arbitrum --json
 ```
 
-Native ETH (unsigned): `action`, `inputAmount`, `inputToken` (`ETH`), `expectedAmount`, `expectedToken` (`vETH`), `mode`, `from` (formatted signer/receiver when dry-run used key or `--address`), `unsigned.to`, `unsigned.value`, `unsigned.data`, `unsigned.chainId`  
-WETH (unsigned): `action:mint-weth`, `inputAmount`, `inputToken` (`WETH`), `expectedAmount`, `expectedToken` (`vETH`), `mode`, `from`, `wethAddress`, `steps` (Approve, Deposit; deposit `receiver` matches `from` when address-only dry-run)  
+Native ETH (unsigned preview): `action`, `inputAmount`, `inputToken` (`ETH`), `expectedAmount`, `expectedToken` (`vETH`), `mode`, `from` (signer/receiver when applicable), `unsigned.to`, `unsigned.value`, `unsigned.data`, `unsigned.chainId`  
+WETH (unsigned preview): `action:mint-weth`, `inputAmount`, `inputToken` (`WETH`), `expectedAmount`, `expectedToken` (`vETH`), `mode`, `from`, `wethAddress`, `steps` (Approve, Deposit; deposit `receiver` aligns with `from` when using address-only flows)  
 Signed: same amount/token fields plus `from`, `txHash`, `explorer`
 
 WETH contract addresses: see `tokens-and-chains.md`.
@@ -103,10 +103,10 @@ WETH contract addresses: see `tokens-and-chains.md`.
 
 Redeem vETH — **not instant** (queue, often 1–3 days).
 
-> Before a real `redeem`, confirm with the user: amount, chain, and that redemption is queued. Use `--dry-run` first.
+> Before broadcasting `redeem`, confirm with the user: amount, chain, and that redemption is queued (not instant).
 
 ```bash
-npx -y @bifrostio/slpx-cli redeem 0.1 --json --dry-run --address 0x742d...
+npx -y @bifrostio/slpx-cli redeem 0.1 --json
 ```
 
 ### `claim`
@@ -114,7 +114,7 @@ npx -y @bifrostio/slpx-cli redeem 0.1 --json --dry-run --address 0x742d...
 Claim completed ETH after redemption.
 
 ```bash
-npx -y @bifrostio/slpx-cli claim --json --dry-run --address 0x742d...
+npx -y @bifrostio/slpx-cli claim --json
 ```
 
 ## Global options
@@ -130,10 +130,9 @@ npx -y @bifrostio/slpx-cli claim --json --dry-run --address 0x742d...
 
 | Option | Description |
 |--------|-------------|
-| `--dry-run` | Build unsigned tx, do not broadcast |
 | `--weth` | Mint from WETH (not native ETH) |
 | `--lp` | LP yields on `apy` only |
-| `--address <addr>` | **`mint` / `redeem` / `claim`:** required for `--dry-run` when `BIFROST_SKILL_PRIVATEKEY` is unset; else optional if the env key is set. **`balance` / `status`:** use the positional `[address]` instead (comma-separated batch for `balance`); omit address only when the env key is set. |
+| `--address <addr>` | **`balance` / `status`:** use the positional `[address]` (comma-separated batch for `balance`); omit to use the default signing wallet. **`mint` / `redeem` / `claim`:** optional when broadcasting (CLI uses the signing wallet); see CLI `--help` for edge cases. |
 
 ## Workflow examples
 
@@ -157,9 +156,8 @@ npx -y @bifrostio/slpx-cli balance 0xAddr1,0xAddr2,0xAddr3 --json
 npx -y @bifrostio/slpx-cli info --json
 npx -y @bifrostio/slpx-cli rate 1 --json
 npx -y @bifrostio/slpx-cli apy --json
-npx -y @bifrostio/slpx-cli mint 0.5 --json --dry-run --address 0xYour...
-# With BIFROST_SKILL_PRIVATEKEY set, `--address` can be omitted on `--dry-run`.
-# Remove `--dry-run` only after pre-tx checklist + explicit user approval.
+npx -y @bifrostio/slpx-cli mint 0.5 --json
+# Broadcast after pre-tx checklist + explicit user approval.
 ```
 
 ### Redeem → claim (vETH)
@@ -176,8 +174,8 @@ npx -y @bifrostio/slpx-cli claim --json
 1. Query commands use the Bifrost API for all 10 vTokens.
 2. On-chain commands are vETH-only on the listed EVM chains.
 3. Redemption goes through Bifrost’s cross-chain queue — not immediate settlement.
-4. **`mint` / `redeem` / `claim`:** broadcasting without `--dry-run` requires a valid `BIFROST_SKILL_PRIVATEKEY`; `--dry-run` requires that env var **or** `--address`. See `references/errors.md` (`NO_PRIVATE_KEY`, `NO_PRIVATE_KEY_OR_ADDRESS`).
-5. **`balance` / `status`:** omitting the address requires `BIFROST_SKILL_PRIVATEKEY`; else pass an address. See `NO_ADDRESS_OR_PRIVATE_KEY` in `references/errors.md`.
+4. **`mint` / `redeem` / `claim`:** broadcasting requires a configured signing key (default for this skill). See `references/errors.md` (`NO_PRIVATE_KEY`, `NO_PRIVATE_KEY_OR_ADDRESS`) and `references/private-key-env.md` if setup is missing.
+5. **`balance` / `status`:** omitting the address uses the default signing wallet; otherwise pass an address. See `NO_ADDRESS_OR_PRIVATE_KEY` in `references/errors.md`.
 6. RPC: CLI may fall back to backup endpoints if primary RPC fails.
 7. `--weth` unsigned flow emits Approve + Deposit steps.
 8. `--lp` on `apy` pulls DeFiLlama pool data for the selected vToken.

@@ -26,28 +26,27 @@ Examples: `--agent cursor` or `--agent claude-code` (use the name your skills CL
 
 ## Example user scenarios
 
-| User intent | Typical CLI flow |
-| ----------- | ---------------- |
-| “What’s vDOT APY” | `apy --token vDOT --json` |
-| “Compare vETH vs vKSM staking yield” | `apy --token vETH --json` then `apy --token vKSM --json`
-| “vETH exchange rate for 10 ETH worth” | `rate 10 --json` (default token vETH) |
-| “Protocol overview for vASTR” | `info --token vASTR --json` |
-| “How much vETH / ETH equivalent does this address have on Base?” | `balance 0x… --chain base --json` |
-| “Stake 0.5 ETH on Arbitrum” | `mint 0.5 --chain arbitrum --json` |
-
+| User intent                                                      | Typical CLI flow                                         |
+| ---------------------------------------------------------------- | -------------------------------------------------------- |
+| “What’s vDOT APY”                                                | `apy --token vDOT --json`                                |
+| “Compare vETH vs vKSM staking yield”                             | `apy --token vETH --json` then `apy --token vKSM --json` |
+| “vETH exchange rate for 10 ETH worth”                            | `rate 10 --json` (default token vETH)                    |
+| “Protocol overview for vASTR”                                    | `info --token vASTR --json`                              |
+| “How much vETH / ETH equivalent does this address have on Base?” | `balance 0x… --chain base --json`                        |
+| “Stake 0.5 ETH on Arbitrum”                                      | `mint 0.5 --chain arbitrum --json`                       |
 
 ## Prerequisites
 
-Set **`BIFROST_SKILL_PRIVATEKEY`** for: **`mint` / `redeem` / `claim`** (broadcast), and optionally **`balance` / `status`** when you omit the address argument so the CLI uses the wallet-derived address. **Never** paste private keys into chat.
+This skill assumes the **CLI signing key is already configured** for on-chain commands. If it is not, follow **`references/private-key-env.md`** in the skill. **Never** paste raw key material into chat.
 
 ## Contents
 
-| Path | Purpose |
-| ---- | ------- |
-| `SKILL.md` | Entry point: when to use, pre-flight, mint/redeem/claim pipeline |
-| `references/commands.md` | CLI commands and flags |
-| `references/tokens-and-chains.md` | vToken matrix, vETH contract, WETH addresses |
-| `references/errors.md` | JSON error `code` values |
-| `references/pre-tx-checklist.md` | Checks before broadcasting |
+| Path                              | Purpose                                                          |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `SKILL.md`                        | Entry point: when to use, pre-flight, mint/redeem/claim pipeline |
+| `references/commands.md`          | CLI commands and flags                                           |
+| `references/tokens-and-chains.md` | vToken matrix, vETH contract, WETH addresses                     |
+| `references/errors.md`            | JSON error `code` values                                         |
+| `references/pre-tx-checklist.md`  | Checks before broadcasting                                       |
 
 The CLI package itself lives in a separate repo and does **not** ship these markdown files.
