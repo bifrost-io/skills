@@ -17,7 +17,9 @@ npx -y @bifrostio/slpx-cli rate --token vDOT --json
 npx -y @bifrostio/slpx-cli rate 100 --token vKSM --json
 ```
 
-Output fields: `input`, `output`, `rate`, `reverseRate`, `token`, `source`
+Output fields: `inputAmount`, `outputAmount`, `inputToken`, `outputToken`, `rate` (`tokenToBase`: `inputToken` per 1 `outputToken`), `source` (on-chain fallback also: `chain`)
+
+**`rate` semantics (agents):** snapshot only—how many units of `inputToken` one `outputToken` commands **at request time**. The JSON has **no** inception date, **no** history, and **no** “cumulative return” label. Do **not** equate `(rate − 1)` with “appreciation since inception” or any other period; that is inferential, not in the data.
 
 ### `apy`
 
@@ -49,7 +51,8 @@ npx -y @bifrostio/slpx-cli info --token vDOT --json
 npx -y @bifrostio/slpx-cli info --token vASTR --json
 ```
 
-Output fields: `protocol`, `token`, `rate`, `totalApy`, `tvl`, `totalStaked`, `totalSupply`, `holders`  
+Output fields: `protocol`, `inputAmount`, `outputAmount`, `inputToken`, `outputToken`, `rate` (`tokenToBase`), `totalApy`, `baseApy`, `rewardApy`, `tvl`, `totalStaked` (amount in `inputToken`), `totalSupply` (amount in `outputToken`), `holders`  
+`rate` here matches **`rate` command** semantics: **spot** `tokenToBase`, **no** time dimension in the JSON.  
 vETH extra: `contract`, `chains`, `paused`
 
 ## On-chain commands (vETH only)
@@ -64,7 +67,7 @@ npx -y @bifrostio/slpx-cli balance 0x742d...bD18 --chain base --json
 npx -y @bifrostio/slpx-cli balance 0xAddr1,0xAddr2,0xAddr3 --json
 ```
 
-Single: `address`, `vethBalance`, `ethValue`, `chain`  
+Single: `address`, `vethBalance` (vETH, amount only), `ethValue` (ETH, amount only), `chain`  
 Batch: `results` (`{address, vethBalance, ethValue}`), `chain`
 
 ### `status <address>`
@@ -75,7 +78,7 @@ Redemption queue status.
 npx -y @bifrostio/slpx-cli status 0x742d...bD18 --json
 ```
 
-Output: `address`, `claimableEth`, `pendingAmount`, `chain`, `hint` (time estimate when pending)
+Output: `address`, `claimableEth` (ETH, amount only), `pendingEthAmount` (ETH, amount only), `chain`, `hint` (time estimate when pending; may include units in prose)
 
 ### `mint <amount>`
 
@@ -88,9 +91,9 @@ npx -y @bifrostio/slpx-cli mint 0.1 --weth --json --dry-run
 npx -y @bifrostio/slpx-cli mint 0.5 --weth --chain arbitrum --json
 ```
 
-Native ETH (unsigned): `action`, `input`, `expected`, `mode`, `unsigned.to`, `unsigned.value`, `unsigned.data`, `unsigned.chainId`  
-WETH (unsigned): `action:mint-weth`, `input`, `expected`, `mode`, `wethAddress`, `steps` (Approve, Deposit)  
-Signed: `action`, `input`, `expected`, `from`, `txHash`, `explorer`
+Native ETH (unsigned): `action`, `inputAmount`, `inputToken` (`ETH`), `expectedAmount`, `expectedToken` (`vETH`), `mode`, `unsigned.to`, `unsigned.value`, `unsigned.data`, `unsigned.chainId`  
+WETH (unsigned): `action:mint-weth`, `inputAmount`, `inputToken` (`WETH`), `expectedAmount`, `expectedToken` (`vETH`), `mode`, `wethAddress`, `steps` (Approve, Deposit)  
+Signed: same amount/token fields plus `from`, `txHash`, `explorer`
 
 WETH contract addresses: see `tokens-and-chains.md`.
 
