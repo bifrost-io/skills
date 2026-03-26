@@ -74,7 +74,7 @@ Before mint/redeem/claim, resolve (ask the user if missing):
 - **Amount** and whether mint uses **native ETH** or **`--weth`**.
 - **Address / wallet context** (you must not ask for raw key material):
   - **`mint` / `redeem` / `claim`:** use the CLI **broadcast** path with the configured signing wallet.
-  - **`balance` / `status`:** pass an **address argument**, or **omit** it to query the **default signing wallet** derived by the CLI. Batch `balance` still needs explicit comma-separated addresses.
+  - **`balance` / `status`:** if the user **does not** give an address, **omit** `[address]` and run immediately (default signing wallet). Do **not** prompt for an address unless they need a specific third-party address or batch `balance` with multiple addresses.
 
 Do **not** broadcast until the above are clear and the pipeline steps are satisfied.
 

@@ -4,6 +4,10 @@ Always pass `--json` when invoking from an agent unless you intentionally need h
 
 Prefix: `npx -y @bifrostio/slpx-cli`
 
+## Natural language → CLI (agents)
+
+If the user asks to **query balance**, **check redemption status**, or similar **without** giving a wallet address, **run the command with no address argument**—do **not** ask for an address first. Example: “check my balance” → `balance --json`; “redemption status” → `status --json`. The CLI resolves the wallet from the configured signing key (see operational notes). Only add a positional address when the user supplies one or explicitly asks to query **another** address (or comma-separated batch for `balance`).
+
 ## Query commands (all vTokens)
 
 ### `rate [amount]`
@@ -175,7 +179,7 @@ npx -y @bifrostio/slpx-cli claim --json
 2. On-chain commands are vETH-only on the listed EVM chains.
 3. Redemption goes through Bifrost’s cross-chain queue — not immediate settlement.
 4. **`mint` / `redeem` / `claim`:** broadcasting requires a configured signing key (default for this skill). See `references/errors.md` (`NO_PRIVATE_KEY`, `NO_PRIVATE_KEY_OR_ADDRESS`) and `references/private-key-env.md` if setup is missing.
-5. **`balance` / `status`:** omitting the address uses the default signing wallet; otherwise pass an address. See `NO_ADDRESS_OR_PRIVATE_KEY` in `references/errors.md`.
+5. **`balance` / `status`:** omitting the address uses the default signing wallet; otherwise pass an address. When the user does not provide an address, run without one (see **Natural language → CLI** above). See `NO_ADDRESS_OR_PRIVATE_KEY` in `references/errors.md` if neither address nor key is available.
 6. RPC: CLI may fall back to backup endpoints if primary RPC fails.
 7. `--weth` unsigned flow emits Approve + Deposit steps.
 8. `--lp` on `apy` pulls DeFiLlama pool data for the selected vToken.
